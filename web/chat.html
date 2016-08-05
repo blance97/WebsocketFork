@@ -1,19 +1,50 @@
-<html ng-app="chat">
+<html>
+
 <head>
 	<title>Tutorial</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
-	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.3/angular.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 	<script src="js/chat.js"></script>
-</head>
-<body ng-controller="MainCt1">
-	<div class="jumbotron">
-		<h1>Chat</h1>
-	</div>
-	<ul>
-		<li ng-repeat="m in messages">{{m}}</li>
-</ul>
+	<link rel="stylesheet" type="text/css" href="css/chat.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" </head>
 
-		<input type="text" placeholder="type here" ng-model="msg"><button class = "btn btn-primary" ng-click="send()">Send</button>
-</body>
+	<body>
+		<nav class="navbar navbar-inverse">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">SimpleChat</a>
+				</div>
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="#">Room 1</a></li>
+					<li><a href="#">Room 2</a></li>
+					<li><a href="#">Room 3</a></li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+					<li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+				</ul>
+			</div>
+		</nav>
+		<input type="text" id="inputUsername" placeholder="type here">
+		<button class="btn btn-primary" id="SetNameBtn">Set Username</button>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-4">
+		    	    <div class="panel panel-primary">
+		              <div class="panel-heading"><b> <b> <small id="ChatPanel"></small></div>
+		              <div class="panel-body" id="chatbox" height: 300px; }">
+		              </div>
+		            </div>
+		        </div>
+
+
+		<div id="sendCtl">
+		<input type="text" id="inputChat" placeholder="type here">
+		<button class = "btn btn-primary" id="sendMsgBtn">Send</button>
+	</div>
+
+	</body>
+
 </html>
