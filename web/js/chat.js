@@ -1,5 +1,5 @@
     var ws = new WebSocket("ws://localhost/ws");
-    var fromMe = false;
+    var CurrentUser = ""
     ws.onopen = function() {
         $("#ChatPanel").html("CONNECTED")
     };
@@ -8,36 +8,40 @@
     };
     ws.onmessage = function(event) {
 
-      if(!fromMe){
-        $('<div class="clearfix"><blockquote class="you pull-right">' +  event.data + '!</blockquote></div>"').appendTo('#chatbox');
-      }
+        console.log(CurrentUser + ": " + getUsername())
+        if (CurrentUser == getUsername()) {
+            $('<div class="clearfix"><blockquote class="you pull-left">' + event.data + '!</blockquote></div>"').appendTo('#chatbox');
+        } else {
+            $('<div class="clearfix"><blockquote class="me pull-right">' + event.data + '!</blockquote></div>"').appendTo('#chatbox');
+        }
+
     }
 
+    function getUsername() {
+        var result = null;
+        $.ajax({
+            type: 'GET',
+            url: '/getUser',
+            async: false,
+            success: function(data) {
+                var obj = jQuery.parseJSON(data)
+                console.log("Success", obj.IP);
+                Username = obj.Username
+                result = Username
+                    //  value = $("#inputChat").val();
+            }
+        });
+        return result
+    }
     $(document).ready(function() {
         var $Username = $('#inputUsername');
         $('#inputChat').val("");
-    // take what's the textbox and send it off
-    $('#sendMsgBtn').click( function(event) {
-      fromMe = true;
-      ws.send($('#inputChat').val());
-      $('#inputChat').val("");
-    });
-    fromMe = false;
+        // take what's the textbox and send it off
+        $('#sendMsgBtn').click(function(event) {
+            ws.send($('#inputChat').val());
+            $('#inputChat').val("");
+        });
 
-      /*  $('#sendMsgBtn').click(function() {
-            $.ajax({
-                type: 'GET',
-                url: '/getUser',
-                success: function(data) {
-                    console.log("Success", data);
-                    value = $("#inputChat").val();
-                    ws.send($Username.val() + ": " + value)
-                    value = ""
-                    $('<div class="clearfix"><blockquote class="me pull-left">' + $Username.val() + ": " + value + '</blockquote></div>"').appendTo('#chatbox');
-
-                }
-            });
-        });*/
 
         $('#SetNameBtn').click(function() {
             $.ajax({
@@ -48,6 +52,7 @@
                 }),
                 dataType: 'json',
                 success: function(data) {
+                    CurrentUser = $Username.val()
                     console.log("Posted Data");
                 }
             });
