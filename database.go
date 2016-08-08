@@ -70,3 +70,11 @@ func StoreUserInfo(socketClientIP string, Username string) {
 		log.Println(err)
 	}
 }
+func getUserInfo(socketClientIP string)(string,error){
+	var ip string
+		sql_stmt := "SELECT Name FROM Users WHERE IP = $1"
+		if err:=db.QueryRow(sql_stmt, socketClientIP).Scan(&ip); err!=nil{
+			return "",err
+		}
+		return ip,nil
+}

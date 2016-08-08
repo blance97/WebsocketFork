@@ -52,13 +52,12 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 /**
 Function to attain the users info and then store it in to the database
 */
-func getUserInfo(w http.ResponseWriter, r *http.Request) {
+func storeUserInfo(w http.ResponseWriter, r *http.Request) {
 	//	log.Printf("Get User Handler")
 	//defer log.Printf("done Get User Handler")
 		socketClientIP := strings.Split(r.RemoteAddr, ":")
 		data := getJSON(r)
 		StoreUserInfo(socketClientIP[0], data["Username"].(string))
-
 }
 func CreateRoom(w http.ResponseWriter, r *http.Request){
 
@@ -77,22 +76,29 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("Succesfully upgraded connection")
-
-	socketClientIP:= r.RemoteAddr
-	socketClient := Clients{conn, socketClientIP,"",0}// <--- Look into that
+			socketClientIP := strings.Split(r.RemoteAddr, ":")
+	socketClient := Clients{conn, socketClientIP[0],"",0}// <--- Look into that
 	ActiveClients[socketClient] = 0
 	log.Println("Total clients live:", len(ActiveClients))
 
 
 	for {
 		// Blocks until a message is read
+		log.Println("loop")
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			conn.Close()
 			return
 		}
+		 username,err2:=getUserInfo(socketClientIP[0])
+		if err2!=nil{
+			log.Println(err2)
+			return
+		}
+		log.Println(username)
+		msg = append(msg, "," + username...)
 		log.Println(string(msg))
-		sendAll(socketClientIP,msg)
+		sendAll(socketClientIP[0],msg)
 	}
 }
 func sendAll(ip string, msg []byte) {

@@ -13,7 +13,7 @@ import (
 
 var ActiveClients = make(map[Clients]int) // map clients that are connected now
 
-var db = InitDB("Database/ChatDB")
+var db = InitDB("database/ChatDB")
 
 //TODO Use the Sync.Mutex in every function where you use the map concurrently.
 
@@ -31,9 +31,9 @@ func main() {
 	http.Handle("/", fileHandler)
 	http.HandleFunc("/ws", wsHandler)
 	http.HandleFunc("/getUser", getIP)
-	http.HandleFunc("/storeUser", getUserInfo)
+	http.HandleFunc("/storeUser", storeUserInfo)
 	log.Printf("Running on port %d\n", *port)
-	addr := fmt.Sprintf("127.0.0.1:%d", *port)
-	err := http.ListenAndServe(addr, nil)
+//	addr := fmt.Sprintf("127.0.0.1:%d", *port)
+	err := http.ListenAndServe(":80", nil)
 	fmt.Println(err.Error())
 }

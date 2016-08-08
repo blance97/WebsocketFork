@@ -8,7 +8,9 @@
         $("#ChatPanel").html("DISCONNECTED")
     };
     ws.onmessage = function(event) {
-      var IP = getIP()
+      var partsOfStr = event.data.split(',');
+      console.log(event.data)
+      var IP = partsOfStr[1]
       console.log("CurrentUserIP: " + CurrentUser + "\tMessageIP: " + IP)
         if (CurrentUser == IP) {
             $('<div class="clearfix"><blockquote class="you pull-left">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
