@@ -1,23 +1,24 @@
     var ws = new WebSocket("ws://localhost/ws");
     var CurrentUser = ""
     ws.onopen = function() {
+      CurrentUser = getIP()
         $("#ChatPanel").html("CONNECTED")
     };
     ws.onclose = function() {
         $("#ChatPanel").html("DISCONNECTED")
     };
     ws.onmessage = function(event) {
-
-        console.log(CurrentUser + ": " + getUsername())
-        if (CurrentUser == getUsername()) {
-            $('<div class="clearfix"><blockquote class="you pull-left">' + event.data + '!</blockquote></div>"').appendTo('#chatbox');
+      var IP = getIP()
+      console.log("CurrentUserIP: " + CurrentUser + "\tMessageIP: " + IP)
+        if (CurrentUser == IP) {
+            $('<div class="clearfix"><blockquote class="you pull-left">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
         } else {
-            $('<div class="clearfix"><blockquote class="me pull-right">' + event.data + '!</blockquote></div>"').appendTo('#chatbox');
+            $('<div class="clearfix"><blockquote class="me pull-right">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
         }
 
     }
 
-    function getUsername() {
+    function getIP() {
         var result = null;
         $.ajax({
             type: 'GET',
@@ -25,15 +26,34 @@
             async: false,
             success: function(data) {
                 var obj = jQuery.parseJSON(data)
-                console.log("Success", obj.IP);
-                Username = obj.Username
-                result = Username
+                ip = obj.IP
+                result = ip
                     //  value = $("#inputChat").val();
             }
         });
         return result
     }
+
+    function CreateRoom() {
+
+      $.ajax({
+          type: 'POST',
+          url: '/CreateRoom',
+          data: JSON.stringify({
+              RoomName: $('#RoomName').val()
+          }),
+          dataType: 'json',
+          success: function(data) {
+              console.log("Posted Data");
+          }
+      });
+    }
+
     $(document).ready(function() {
+       $('.modal-trigger').leanModal();
+
+
+
         var $Username = $('#inputUsername');
         $('#inputChat').val("");
         // take what's the textbox and send it off
@@ -52,8 +72,6 @@
                 }),
                 dataType: 'json',
                 success: function(data) {
-                    CurrentUser = $Username.val()
-                    console.log("Posted Data");
                 }
             });
         });
