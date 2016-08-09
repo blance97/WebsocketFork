@@ -37,7 +37,8 @@ func CreateUserTable() {
 	sql_table := `
 	CREATE TABLE IF NOT EXISTS Users(
 		IP TEXT PRIMARY KEY,
-		Name TEXT,
+		Username TEXT,
+		Password TEXT,
     DateCreated
 	);
 	`
@@ -49,24 +50,26 @@ func CreateUserTable() {
 	}
 }
 
-func StoreUserInfo(socketClientIP string, Username string) {
+func StoreUserInfo(socketClientIP string, Username string,Password string) {
 	sql_stmt := `
 	INSERT OR REPLACE INTO Users(
 		IP,
-		Name,
+		Username,
+		Password,
     DateCreated
-	)values(?, ?, ?)
+	)values(?, ?, ?, ?)
 	`
 	 stmt, err := db.Prepare(sql_stmt)
     if err!=nil{
 		log.Print(err)
 	}
-	c := Clients{
+	c := NewUser{
 		IP:          socketClientIP,
 		Username:    Username,
+		Password: 	Password,
 		DateCreated: time.Now().Unix(),
 	}
-	if _, err := stmt.Exec(c.IP, c.Username, c.DateCreated); err != nil {
+	if _, err := stmt.Exec(c.IP, c.Username,c.Password, c.DateCreated); err != nil {
 		log.Println(err)
 	}
 }
@@ -77,4 +80,13 @@ func getUserInfo(socketClientIP string)(string,error){
 			return "",err
 		}
 		return ip,nil
+}
+func getUserPassword(Username string)(string,error){
+	var Password string
+	log.Println(Username)
+	sql_stmt := "SELECT Password FROM Users WHERE Name = $1"
+	if err:=db.QueryRow(sql_stmt,Username).Scan(&Password);err!=nil{
+		return "",err
+	}
+	return Password,nil
 }

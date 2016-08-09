@@ -12,13 +12,70 @@ import (
 type Clients struct {
     websocket *websocket.Conn
     IP string
-		Username string
-		DateCreated int64
+}
+type NewUser struct{
+	IP string
+	Username string
+	Password string
+	DateCreated int64
 }
 type Room struct{
 	Members []Clients
 	RoomName string
 	Password string
+}
+
+// func checkSessionHandler(w http.ResponseWriter, r *http.Request) {
+// 	// Check if the user's session is still valid
+// 	if r.Method == http.MethodGet {
+// 		log.Printf("checkSessionHandler:\tBegin execution")
+// 		err := checkSession(w, r)
+// 		if err != nil {
+// 			log.Printf("checkSessionHandler:\t%s", err.Error())
+// 			w.WriteHeader(http.StatusUnauthorized)
+// 			return
+// 		}
+// 		w.WriteHeader(http.StatusOK)
+// 		return
+// 	}
+// 	w.WriteHeader(http.StatusBadRequest)
+// 	return
+// }
+func checkSessionID(w http.ResponseWriter, r *http.Request){
+	log.Println(r.URL.Path)
+		socketClientIP := strings.Split(r.RemoteAddr, ":")
+	cookie, err := r.Cookie("logged-in")
+	if err==http.ErrNoCookie{
+		cookie = &http.Cookie{
+			Name: "logged-in",
+			Value: "0",
+		}
+	}
+	if(r.URL.Path == "/login"){
+		log.Println("login")
+		data:= getJSON(r)
+		username:=data["Username"].(string)
+		password:=data["Pass"].(string)
+		 p,err:=getUserPassword(username);
+		if err!=nil{
+			log.Println("Error in getpassword ", err)
+		}
+		if password == p{
+			log.Println("nigge")
+			cookie = &http.Cookie{
+				Name: "logged-in",
+				Value: "1",
+			}
+			StoreUserInfo(socketClientIP[0], username,password)
+		}
+	}
+	if r.URL.Path == "/logout"{
+		cookie = &http.Cookie{
+			Name: "logged-in",
+			Value: "0",
+		}
+	}
+	http.SetCookie(w,cookie)
 }
 
 /**
@@ -57,7 +114,7 @@ func storeUserInfo(w http.ResponseWriter, r *http.Request) {
 	//defer log.Printf("done Get User Handler")
 		socketClientIP := strings.Split(r.RemoteAddr, ":")
 		data := getJSON(r)
-		StoreUserInfo(socketClientIP[0], data["Username"].(string))
+		StoreUserInfo(socketClientIP[0], data["Username"].(string),data["Password"].(string))
 }
 func CreateRoom(w http.ResponseWriter, r *http.Request){
 
@@ -77,7 +134,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Succesfully upgraded connection")
 			socketClientIP := strings.Split(r.RemoteAddr, ":")
-	socketClient := Clients{conn, socketClientIP[0],"",0}// <--- Look into that
+	socketClient := Clients{conn, socketClientIP[0]}// <--- Look into that
 	ActiveClients[socketClient] = 0
 	log.Println("Total clients live:", len(ActiveClients))
 

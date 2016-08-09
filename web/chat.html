@@ -9,42 +9,41 @@
 	<link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection">
 	<script type="text/javascript" src="js/materialize.min.js"></script>
 </head>
-	<body>
+
+<body>
 
 
 
-		<nav>
-			<div class="nav-wrapper">
-				<a href="#" class="brand-logo right">Logo</a>
-				<ul id="nav-mobile" class="left hide-on-med-and-down">
-					<li><a href="test.html">Rooms</a></li>
-						<li><a class="modal-trigger waves-effect" href="#modal1">Create Room</a></li>
-				</ul>
+	<nav>
+		<div class="nav-wrapper">
+			<a href="index.html" class="brand-logo right">Logo</a>
+			<ul id="nav-mobile" class="left hide-on-med-and-down">
+				<li><a href="test.html">Rooms</a></li>
+				<li><a class="modal-trigger waves-effect" href="#modal1">Create Room</a></li>
+			</ul>
+		</div>
+	</nav>
+
+
+	<!-- Modal Structure -->
+	<div id="modal1" class="modal modal-fixed-footer" style="height:250px">
+		<div class="modal-content">
+			<div class="input-field col s6">
+				<input placeholder="RoomName" id="RoomName" type="text" class="validate" required>
+				<label for="RoomName">Room Name</label>
 			</div>
-		</nav>
-		<input type="text" id="inputUsername" placeholder="type here">
-		<button class="btn btn-primary" id="SetNameBtn">Set Username</button>
+		</div>
+		<div class="modal-footer">
+			<a class="waves-effect waves-light btn" id="createRoomBtn" onclick="CreateRoom()">Create</a>
+		</div>
+	</div>
 
 
-		  <!-- Modal Structure -->
-		  <div id="modal1" class="modal modal-fixed-footer" style="height:250px">
-		    <div class="modal-content">
-					<div class="input-field col s6">
-				   <input placeholder="RoomName" id="RoomName" type="text" class="validate" required>
-				 <label for="RoomName">Room Name</label>
-			 </div>
-		    </div>
-		    <div class="modal-footer">
-		    <a class="waves-effect waves-light btn" id="createRoomBtn" onclick="CreateRoom()">Create</a>
-		    </div>
-		  </div>
-
-
-		<div class="container">
-			<div class="row">
-				<div class="col-md-4">
-					<div class="panel panel-primary">
-						<div class="panel-heading"><b> <b> <small id="ChatPanel"></small></div>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-4">
+				<div class="panel panel-primary">
+					<div class="panel-heading"><b> <b> <small id="ChatPanel"></small></div>
 		              <div class="panel-body" id="chatbox" height: 300px; }">
 		              </div>
 		            </div>
