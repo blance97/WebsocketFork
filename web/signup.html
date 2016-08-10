@@ -13,15 +13,20 @@
 	<form method="post" action="/login">
 		<div class="modal-content">
 			<div class="input-field col s12" style="height:40px">
-				<input id="Username" name="Username" type="text" class="validate" required>
+				<input id="Username" type="text" class="validate" required>
 				<label for="Username">Username</label>
 			</div>
 			<div class="input-field col s12">
-				<input id="password" name="password" type="password" class="validate" required>
+				<input id="password" type="password" class="validate" required>
 				<label for="password">Password</label>
 			</div>
+			<div class="input-field col s12">
+				<input id="password1" type="password" class="validate" required onblur="validateForm()">
+				<label for="password">Confirm Password</label>
+			</div>
+			<p id="result" class="card red darken-1"></p>
 		</div>
-		<input type="submit" class="waves-effect waves-light btn">Create</input>
+		<input class="waves-effect waves-light btn" onclick="login()">Create</input>
 	</form>
 	</div>
 </body>
