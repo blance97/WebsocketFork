@@ -14,11 +14,11 @@ type Clients struct {
 	websocket *websocket.Conn
 	IP        string
 }
-type NewUser struct {
+type User struct {
 	IP          string
 	Username    string
 	Password    string
-	SessionID 	string
+	SessionID   string
 	DateCreated int64
 }
 type Room struct {
@@ -43,77 +43,74 @@ type Cookie struct {
 	Unparsed []string // Raw text of unparsed attribute-value pairs
 }
 
-// func checkSessionHandler(w http.ResponseWriter, r *http.Request) {
-// 	// Check if the user's session is still valid
-// 	if r.Method == http.MethodGet {
-// 		log.Printf("checkSessionHandler:\tBegin execution")
-// 		err := checkSession(w, r)
-// 		if err != nil {
-// 			log.Printf("checkSessionHandler:\t%s", err.Error())
-// 			w.WriteHeader(http.StatusUnauthorized)
-// 			return
-// 		}
-// 		w.WriteHeader(http.StatusOK)
-// 		return
-// 	}
-// 	w.WriteHeader(http.StatusBadRequest)
-// 	return
-// }
+var SessionToken string
 
 func SetSessionID(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL.Path)
 	socketClientIP := strings.Split(r.RemoteAddr, ":")
-	cookie, err := r.Cookie("logged-in")
+	cookie, err := r.Cookie("SessionToken")
+	SessionToken = cookie.Value
 	username := r.FormValue("Username")
 	password := r.FormValue("password")
 	if err == http.ErrNoCookie {
 		cookie = &http.Cookie{
-			Name:  "logged-in",
+			Name:  "SessionToken",
 			Value: "0",
 		}
 	}
 	if r.URL.Path == "/login" {
 		log.Println("login")
+		redirectTarget := "/"
 		p, err := getUserPassword(username)
 		if err != nil {
 			log.Println("Error in getpassword ", err)
+			http.Redirect(w, r, "/login.html", 302)
 		}
+
+		var token string
 		if password == p {
-			log.Println("nigge")
+			log.Printf("Password1: %s Password2: %s", password, p)
 			expiration := time.Now().Add(365 * 24 * time.Hour)
-			cookie = &http.Cookie{Name: "logged-in", Value: "1", Expires: expiration}
+			for {
+				token, _ = GenerateRandomString(64)
+				if CheckValidSessionToken(token) {
+					break
+				}
+			}
+			cookie := &http.Cookie{Name: "SessionToken", Value: token, Expires: expiration}
 			http.SetCookie(w, cookie)
-			http.Redirect(w, r, "/chat.html", 302)
-			StoreUserInfo(socketClientIP[0], username, password, cookie.Value)
-		} else {
-			http.Redirect(w, r, "/", 302)
+			redirectTarget = "/chat.html"
+			StoreUserInfo(socketClientIP[0], username, password, SessionToken)
 		}
+		http.Redirect(w, r, redirectTarget, 302)
+		http.SetCookie(w, cookie)
 	}
-	/**
-	TODO: GET Username from sessionID and then set that sessionid to zero.
-	*/
-	if r.URL.Path == "/logout" {
-		cookie = &http.Cookie{
-			Name:  "logged-in",
-			Value: "0",
-		}
-		StoreUserInfo(socketClientIP[0], username, password, cookie.Value)
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	log.Println("Logout Hanlder")
+	username, _ := getUsername(SessionToken)
+	log.Println("Cleared Logout")
+	cookie := &http.Cookie{
+		Name:  "SessionToken",
+		Value: "0",
 	}
 	http.SetCookie(w, cookie)
+	storeNewSessionToken(cookie.Value, username)
 }
+
 /**
-	 checks the SessionID
+checks the SessionID
 */
-func checkSession(w http.ResponseWriter, r *http.Request){
-	cookie, _ := r.Cookie("logged-in")
-	if(cookie.Value!="0"){
-			w.WriteHeader(http.StatusOK)
-			return
-	}
-		http.Error(w, "No Session", 403)
-		http.Redirect(w, r, "/", 302)
+func checkSession(w http.ResponseWriter, r *http.Request) {
+	if SessionToken != "0" {
+		w.WriteHeader(http.StatusOK)
 		return
+	}
+	http.Error(w, "No Session", 403)
+	return
 }
+
 /**
 JSON Decoder
 */
@@ -133,12 +130,12 @@ func getJSON(r *http.Request) map[string]interface{} {
 } //decode JSON
 
 /**
-Returns IP address of current user to the client so that it can validate whether or not a message belongs to them.
+Returns User so that it can validate whether or not a message belongs to them.
 */
-func getIP(w http.ResponseWriter, r *http.Request) {
-	socketClientIP := strings.Split(r.RemoteAddr, ":")
-	q := Clients{
-		IP: socketClientIP[0],
+func getUser(w http.ResponseWriter, r *http.Request) {
+	username, _ := getUsername(SessionToken)
+	q := User{
+		Username: username,
 	}
 	json.NewEncoder(w).Encode(q)
 }
@@ -146,13 +143,14 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 /**
 Function to attain the users info and then store it in to the database
 */
-func storeUserInfo(w http.ResponseWriter, r *http.Request) {
+func signUp(w http.ResponseWriter, r *http.Request) {
 	//	log.Printf("Get User Handler")
 	//defer log.Printf("done Get User Handler")
 	socketClientIP := strings.Split(r.RemoteAddr, ":")
 	data := getJSON(r)
-	StoreUserInfo(socketClientIP[0], data["Username"].(string), data["Password"].(string), "0")
+	StoreUserInfo(socketClientIP[0], data["Username"].(string), data["Pass"].(string), "0")
 }
+
 func CreateRoom(w http.ResponseWriter, r *http.Request) {
 
 }
@@ -169,6 +167,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+
 	log.Println("Succesfully upgraded connection")
 	socketClientIP := strings.Split(r.RemoteAddr, ":")
 	socketClient := Clients{conn, socketClientIP[0]} // <--- Look into that
@@ -177,19 +176,22 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		// Blocks until a message is read
-		log.Println("loop")
-		_, msg, err := conn.ReadMessage()
+		cookie, err := r.Cookie("SessionToken")
+		if err != nil {
+			log.Println("Lolcde", err)
+			return
+		}
+		SessionToken = cookie.Value
+		username, _ := getUsername(SessionToken)
+		log.Println("SessionToken: ", SessionToken)
+		msg := []byte(username + ": ")
+		_, msg2, err := conn.ReadMessage()
 		if err != nil {
 			conn.Close()
 			return
 		}
-		username, err2 := getUserInfo(socketClientIP[0])
-		if err2 != nil {
-			log.Println(err2)
-			return
-		}
-		log.Println(username)
-		msg = append(msg, ","+username...)
+
+		msg = append(msg, msg2...)
 		log.Println(string(msg))
 		sendAll(socketClientIP[0], msg)
 	}

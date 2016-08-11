@@ -36,10 +36,10 @@ Name: string
 func CreateUserTable() {
 	sql_table := `
 	CREATE TABLE IF NOT EXISTS Users(
-		IP TEXT PRIMARY KEY,
-		Username TEXT,
+		IP TEXT ,
+		Username TEXT PRIMARY KEY,
 		Pass TEXT,
-		SessionID TEXT,
+		SessionID TEXT ,
     DateCreated
 	);
 	`
@@ -49,6 +49,29 @@ func CreateUserTable() {
 	if err != nil {
 		log.Print(err)
 	}
+}
+func CheckValidSessionToken(sessionToken string) bool {
+	sql_stmt := `SELECT SessionID FROM Users`
+	dbMu.Lock()
+	rows, err := db.Query(sql_stmt)
+	dbMu.Unlock()
+	if err != nil {
+		log.Println(" No Results in database", err.Error())
+		return false
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var SessionToken string
+		if err := rows.Scan(&SessionToken); err != nil {
+			log.Println("Error scanning databasse for sessiond id", err)
+			return false
+		}
+		if sessionToken == SessionToken {
+			return false
+		}
+	}
+	log.Println("Valid Session Unique")
+	return true
 }
 
 func StoreUserInfo(socketClientIP string, Username string, Password string, SessionID string) {
@@ -65,7 +88,7 @@ func StoreUserInfo(socketClientIP string, Username string, Password string, Sess
 	if err != nil {
 		log.Print(err)
 	}
-	c := NewUser{
+	c := User{
 		IP:          socketClientIP,
 		Username:    Username,
 		Password:    Password,
@@ -75,7 +98,9 @@ func StoreUserInfo(socketClientIP string, Username string, Password string, Sess
 	if _, err := stmt.Exec(c.IP, c.Username, c.Password, c.SessionID, c.DateCreated); err != nil {
 		log.Println(err)
 	}
+	log.Println("Store New User Info")
 }
+
 func getUserInfo(socketClientIP string) (string, error) {
 	var ip string
 	sql_stmt := "SELECT Username FROM Users WHERE IP = $1"
@@ -83,6 +108,24 @@ func getUserInfo(socketClientIP string) (string, error) {
 		return "", err
 	}
 	return ip, nil
+}
+
+func getUsername(sessionToken string) (string, error) {
+	var Username string
+	sql_stmt := `SELECT Username FROM Users WHERE SessionID = $1`
+	if err := db.QueryRow(sql_stmt, sessionToken).Scan(&Username); err != nil {
+		return "", err
+	}
+	return Username, nil
+}
+func storeNewSessionToken(sid string, Username string) {
+	sql_stmt := `UPDATE Users SET SessionID = $1 WHERE Username = $2`
+	if _, err := db.Exec(sql_stmt, sid,Username); err != nil {
+		log.Println("Error in storing sessionToken: ", err)
+		return
+	}
+	log.Println("Stored SessionToken")
+	return
 }
 func getUserPassword(Username string) (string, error) {
 	var Password string

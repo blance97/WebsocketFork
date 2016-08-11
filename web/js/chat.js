@@ -1,7 +1,9 @@
+var CurrentUser = ""
 $(document).ready(function() {
-
+    checkLogin()
+    CurrentUser = getUser()
+    $("#loggedinAs").html(CurrentUser)
     $('.modal-trigger').leanModal();
-
 
 
     var $Username = $('#inputUsername');
@@ -13,47 +15,29 @@ $(document).ready(function() {
     });
 
 
-    $('#SetNameBtn').click(function() {
-        $.ajax({
-            type: 'POST',
-            url: '/storeUser',
-            data: JSON.stringify({
-                Username: $Username.val()
-            }),
-            dataType: 'json',
-            success: function(data) {}
-        });
-    });
 
 });
 
 var ws = new WebSocket("ws://192.168.71.1/ws");
 var CurrentUser = ""
 ws.onopen = function() {
-    CurrentUser = getIP()
     $("#ChatPanel").html("CONNECTED")
 };
 ws.onclose = function() {
     $("#ChatPanel").html("DISCONNECTED")
 };
 ws.onmessage = function(event) {
-    var partsOfStr = event.data.split(',');
-    console.log(event.data)
-    var IP = partsOfStr[1]
-    console.log("CurrentUserIP: " + CurrentUser + "\tMessageIP: " + IP)
-    if (CurrentUser == IP) {
+    console.log("Current User: " + CurrentUser)
+    if (CurrentUser == getUser()) {
         $('<div class="clearfix"><blockquote class="you pull-left">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
-    } else {
-        $('<div class="clearfix"><blockquote class="me pull-right">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
-    }
+     } else {
+         $('<div class="clearfix"><blockquote class="me pull-right">' + event.data + '</blockquote></div>"').appendTo('#chatbox');
+     }
 
 }
 
-function checkLogin(){
-    $('#modal2').openModal();
-}
 
-function getIP() {
+function getUser() {
     var result = null;
     $.ajax({
         type: 'GET',
@@ -61,12 +45,11 @@ function getIP() {
         async: false,
         success: function(data) {
             var obj = jQuery.parseJSON(data)
-            ip = obj.IP
-            result = ip
+            Username = obj.Username
                 //  value = $("#inputChat").val();
         }
     });
-    return result
+    return Username
 }
 
 function CreateRoom() {
@@ -79,7 +62,18 @@ function CreateRoom() {
         dataType: 'json',
         success: function(data) {
             console.log("Posted Data");
-              $('#modal1').closeModal();
+            $('#modal1').closeModal();
+        }
+    });
+}
+
+function logout() {
+    $.ajax({
+        type: 'GET',
+        url: '/logout',
+        async: false,
+        success: function() {
+            window.location = "index.html"
         }
     });
 }
